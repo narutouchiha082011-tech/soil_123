@@ -2,28 +2,40 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Live Vision AI</title>
+  <title>Live Camera AI</title>
 
   <!-- TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+
   <!-- Teachable Machine Image -->
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
   <style>
     body {
-      font-family: Arial;
+      margin: 0;
+      background: black;
+      color: white;
       text-align: center;
-      background: #111;
-      color: #fff;
+      font-family: Arial;
     }
-    canvas {
-      border: 3px solid #00ffcc;
-      border-radius: 10px;
+
+    #camera-container {
+      display: flex;
+      justify-content: center;
       margin-top: 10px;
     }
+
+    canvas {
+      width: 90vw;
+      max-width: 400px;
+      height: auto;
+      border: 3px solid #00ffcc;
+      border-radius: 12px;
+    }
+
     #label {
-      font-size: 24px;
-      margin-top: 15px;
+      margin-top: 12px;
+      font-size: 22px;
       font-weight: bold;
       color: #00ffcc;
     }
@@ -31,9 +43,11 @@
 </head>
 
 <body>
-  <h2>Live AI Vision</h2>
-  <div id="webcam"></div>
-  <div id="label">Loading model...</div>
+  <h2>Live Vision</h2>
+
+  <div id="camera-container"></div>
+
+  <div id="label">Starting camera...</div>
 
   <script>
     const modelURL = "https://teachablemachine.withgoogle.com/models/S9q_dztT1/";
@@ -46,29 +60,32 @@
       );
 
       webcam = new tmImage.Webcam(400, 300, true);
-      await webcam.setup();
-      await webcam.play();
+      await webcam.setup();      // asks for camera permission
+      await webcam.play();       // starts camera
 
-      document.getElementById("webcam").appendChild(webcam.canvas);
+      // IMPORTANT: append canvas visibly
+      document
+        .getElementById("camera-container")
+        .appendChild(webcam.canvas);
+
       window.requestAnimationFrame(loop);
     }
 
     async function loop() {
       webcam.update();
       await predict();
-      setTimeout(() => {
-        window.requestAnimationFrame(loop);
-      }, 300); // controls speed
+      requestAnimationFrame(loop);
     }
 
     async function predict() {
       const predictions = await model.predict(webcam.canvas);
+
       let best = predictions.reduce((a, b) =>
         a.probability > b.probability ? a : b
       );
 
-      const text = best.className + " (" + (best.probability * 100).toFixed(1) + "%)";
-      document.getElementById("label").innerText = text;
+      document.getElementById("label").innerText =
+        best.className + " (" + (best.probability * 100).toFixed(1) + "%)";
 
       if (window.AppInventor) {
         window.AppInventor.setWebViewString(best.className);
