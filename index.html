@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>TM Camera → App Inventor</title>
+  <title>Live Vision AI</title>
 
   <!-- TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
@@ -10,56 +10,68 @@
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
   <style>
-    body { font-family: Arial; text-align: center; margin: 20px; }
-    video { width: 80%; max-width: 400px; border: 2px solid #444; margin-top: 10px; }
-    button { margin-top: 10px; padding: 10px 20px; font-size: 16px; }
-    #result { margin-top: 15px; font-size: 18px; font-weight: bold; }
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #111;
+      color: #fff;
+    }
+    canvas {
+      border: 3px solid #00ffcc;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    #label {
+      font-size: 24px;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #00ffcc;
+    }
   </style>
 </head>
 
 <body>
-  <h2>Teachable Machine Camera</h2>
-  <video id="webcam" autoplay playsinline></video>
-  <br>
-  <button onclick="predictFromCamera()">Predict</button>
-  <p id="result">Waiting...</p>
+  <h2>Live AI Vision</h2>
+  <div id="webcam"></div>
+  <div id="label">Loading model...</div>
 
   <script>
     const modelURL = "https://teachablemachine.withgoogle.com/models/S9q_dztT1/";
-    let model, webcam, maxPredictions;
+    let model, webcam;
 
-    // Load model
     async function init() {
-      model = await tmImage.load(modelURL + "model.json", modelURL + "metadata.json");
-      maxPredictions = model.getTotalClasses();
+      model = await tmImage.load(
+        modelURL + "model.json",
+        modelURL + "metadata.json"
+      );
 
-      // Setup webcam
-      const flip = true; // front camera
-      webcam = new tmImage.Webcam(400, 300, flip);
+      webcam = new tmImage.Webcam(400, 300, true);
       await webcam.setup();
       await webcam.play();
-      window.requestAnimationFrame(loop);
 
       document.getElementById("webcam").appendChild(webcam.canvas);
+      window.requestAnimationFrame(loop);
     }
 
     async function loop() {
       webcam.update();
-      window.requestAnimationFrame(loop);
+      await predict();
+      setTimeout(() => {
+        window.requestAnimationFrame(loop);
+      }, 300); // controls speed
     }
 
-    async function predictFromCamera() {
+    async function predict() {
       const predictions = await model.predict(webcam.canvas);
+      let best = predictions.reduce((a, b) =>
+        a.probability > b.probability ? a : b
+      );
 
-      // Find highest probability
-      let best = predictions.reduce((a, b) => a.probability > b.probability ? a : b);
+      const text = best.className + " (" + (best.probability * 100).toFixed(1) + "%)";
+      document.getElementById("label").innerText = text;
 
-      // Update result paragraph
-      document.getElementById("result").innerText = best.className + " (" + (best.probability*100).toFixed(1) + "%)";
-
-      // Send to App Inventor
       if (window.AppInventor) {
-        window.AppInventor.setWebViewString(best.className); // only class name
+        window.AppInventor.setWebViewString(best.className);
       }
     }
 
