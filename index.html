@@ -2,12 +2,9 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Live Camera AI</title>
+  <title>Live Vision AI</title>
 
-  <!-- TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
-
-  <!-- Teachable Machine Image -->
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
   <style>
@@ -19,7 +16,7 @@
       font-family: Arial;
     }
 
-    #camera-container {
+    #camera {
       display: flex;
       justify-content: center;
       margin-top: 10px;
@@ -28,50 +25,73 @@
     canvas {
       width: 90vw;
       max-width: 400px;
-      height: auto;
       border: 3px solid #00ffcc;
       border-radius: 12px;
     }
 
     #label {
-      margin-top: 12px;
-      font-size: 22px;
+      margin-top: 10px;
+      font-size: 20px;
       font-weight: bold;
       color: #00ffcc;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background: #00ffcc;
+      color: black;
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
-  <h2>Live Vision</h2>
+  <h2>Live Camera AI</h2>
 
-  <div id="camera-container"></div>
+  <button onclick="flipCamera()">Flip Camera</button>
 
-  <div id="label">Starting camera...</div>
+  <div id="camera"></div>
+  <div id="label">Loading...</div>
 
   <script>
     const modelURL = "https://teachablemachine.withgoogle.com/models/S9q_dztT1/";
     let model, webcam;
+    let isFrontCamera = true;
 
     async function init() {
       model = await tmImage.load(
         modelURL + "model.json",
         modelURL + "metadata.json"
       );
+      startCamera();
+    }
 
-      webcam = new tmImage.Webcam(400, 300, true);
-      await webcam.setup();      // asks for camera permission
-      await webcam.play();       // starts camera
+    async function startCamera() {
+      // stop existing webcam if any
+      if (webcam) {
+        webcam.stop();
+        document.getElementById("camera").innerHTML = "";
+      }
 
-      // IMPORTANT: append canvas visibly
-      document
-        .getElementById("camera-container")
-        .appendChild(webcam.canvas);
+      webcam = new tmImage.Webcam(400, 300, isFrontCamera);
+      await webcam.setup();   // permission happens here
+      await webcam.play();
 
+      document.getElementById("camera").appendChild(webcam.canvas);
       window.requestAnimationFrame(loop);
     }
 
+    function flipCamera() {
+      isFrontCamera = !isFrontCamera;
+      startCamera();
+    }
+
     async function loop() {
+      if (!webcam) return;
       webcam.update();
       await predict();
       requestAnimationFrame(loop);
@@ -79,7 +99,6 @@
 
     async function predict() {
       const predictions = await model.predict(webcam.canvas);
-
       let best = predictions.reduce((a, b) =>
         a.probability > b.probability ? a : b
       );
