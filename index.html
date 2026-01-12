@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Live Vision AI</title>
+  <title>Vision AI</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
@@ -10,56 +10,64 @@
   <style>
     body {
       margin: 0;
-      background: black;
-      color: white;
-      font-family: Arial;
+      background: white;
+      font-family: Arial, sans-serif;
     }
 
-    /* FIXED BUTTON */
+    /* TOP BAR */
+    #topbar {
+      width: 100%;
+      height: 50px;
+      background: #f2f2f2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding-right: 10px;
+      box-sizing: border-box;
+    }
+
     #flipBtn {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 9999;
-      padding: 10px 14px;
+      padding: 8px 14px;
       font-size: 14px;
       font-weight: bold;
-      background: #00ffcc;
+      background: #007bff;
+      color: white;
       border: none;
-      border-radius: 20px;
-      color: black;
+      border-radius: 6px;
     }
 
     #camera {
       display: flex;
       justify-content: center;
-      margin-top: 50px;
+      margin-top: 10px;
     }
 
     canvas {
       width: 90vw;
       max-width: 400px;
-      border: 3px solid #00ffcc;
-      border-radius: 12px;
+      border: 2px solid #007bff;
+      border-radius: 10px;
     }
 
     #label {
       text-align: center;
       margin-top: 10px;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
-      color: #00ffcc;
+      color: black;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- FLIP CAMERA BUTTON -->
-  <button id="flipBtn" onclick="flipCamera()">Flip</button>
+  <!-- TOP BAR WITH BUTTON -->
+  <div id="topbar">
+    <button id="flipBtn" onclick="flipCamera()">Flip Camera</button>
+  </div>
 
   <div id="camera"></div>
-  <div id="label">Loading...</div>
+  <div id="label">Loading model…</div>
 
   <script>
     const modelURL = "https://teachablemachine.withgoogle.com/models/S9q_dztT1/";
@@ -94,7 +102,6 @@
     }
 
     async function loop() {
-      if (!webcam) return;
       webcam.update();
       await predict();
       requestAnimationFrame(loop);
@@ -102,7 +109,7 @@
 
     async function predict() {
       const predictions = await model.predict(webcam.canvas);
-      let best = predictions.reduce((a, b) =>
+      const best = predictions.reduce((a, b) =>
         a.probability > b.probability ? a : b
       );
 
