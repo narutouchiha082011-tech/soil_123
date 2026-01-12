@@ -1,49 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Teachable Machine → MIT App Inventor</title>
-<!-- TensorFlow.js -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
-<!-- Teachable Machine Image -->
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+  <meta charset="UTF-8">
+  <title>TM Camera → App Inventor</title>
+
+  <!-- TensorFlow.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+  <!-- Teachable Machine Image -->
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+
+  <style>
+    body { font-family: Arial; text-align: center; margin: 20px; }
+    video { width: 80%; max-width: 400px; border: 2px solid #444; margin-top: 10px; }
+    button { margin-top: 10px; padding: 10px 20px; font-size: 16px; }
+    #result { margin-top: 15px; font-size: 18px; font-weight: bold; }
+  </style>
 </head>
+
 <body>
-<h3>Teachable Machine Prediction</h3>
-<input type="file" accept="image/*" onchange="predictImage(event)">
-<p id="result">Waiting...</p>
-<script>
-   const modelURL = "https://teachablemachine.withgoogle.com/models/S9q_dztT1/";
-   let model;
-   async function loadModel() {
-     model = await tmImage.load(
-       modelURL + "model.json",
-       modelURL + "metadata.json"
-     );
-     console.log("Model loaded");
-   }
-   loadModel();
-   async function predictImage(event) {
-     const img = document.createElement("img");
-     img.src = URL.createObjectURL(event.target.files[0]);
-     img.onload = async () => {
-       const predictions = await model.predict(img);
-       // Find highest probability
-       let best = predictions.reduce((a, b) =>
-         a.probability > b.probability ? a : b
-       );
-       const output = {
-         class: best.className,
-         confidence: best.probability
-       };
-       document.getElementById("result").innerText =
-         best.className + " (" + (best.probability * 100).toFixed(2) + "%)";
-       // 🔥 SEND TO MIT APP INVENTOR
-       if (window.AppInventor) {
-         window.AppInventor.setWebViewString(JSON.stringify(output));
-       }
-     };
-   }
-</script>
+  <h2>Teachable Machine Camera</h2>
+  <video id="webcam" autoplay playsinline></video>
+  <br>
+  <button onclick="predictFromCamera()">Predict</button>
+  <p id="result">Waiting...</p>
+
+  <script>
+    const modelURL = "https://teachablemachine.withgoogle.com/models/S9q_dztT1/";
+    let model, webcam, maxPredictions;
+
+    // Load model
+    async function init() {
+      model = await tmImage.load(modelURL + "model.json", modelURL + "metadata.json");
+      maxPredictions = model.getTotalClasses();
+
+      // Setup webcam
+      const flip = true; // front camera
+      webcam = new tmImage.Webcam(400, 300, flip);
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam").appendChild(webcam.canvas);
+    }
+
+    async function loop() {
+      webcam.update();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predictFromCamera() {
+      const predictions = await model.predict(webcam.canvas);
+
+      // Find highest probability
+      let best = predictions.reduce((a, b) => a.probability > b.probability ? a : b);
+
+      // Update result paragraph
+      document.getElementById("result").innerText = best.className + " (" + (best.probability*100).toFixed(1) + "%)";
+
+      // Send to App Inventor
+      if (window.AppInventor) {
+        window.AppInventor.setWebViewString(best.className); // only class name
+      }
+    }
+
+    init();
+  </script>
 </body>
 </html>
