@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Teachable Machine → MIT App Inventor</title>
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+<!-- Teachable Machine Image -->
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+</head>
+<body>
+<h3>Teachable Machine Prediction</h3>
+<input type="file" accept="image/*" onchange="predictImage(event)">
+<p id="result">Waiting...</p>
+<script>
+   const modelURL = "https://teachablemachine.withgoogle.com/models/YOUR_MODEL_URL_HERE/";
+   let model;
+   async function loadModel() {
+     model = await tmImage.load(
+       modelURL + "model.json",
+       modelURL + "metadata.json"
+     );
+     console.log("Model loaded");
+   }
+   loadModel();
+   async function predictImage(event) {
+     const img = document.createElement("img");
+     img.src = URL.createObjectURL(event.target.files[0]);
+     img.onload = async () => {
+       const predictions = await model.predict(img);
+       // Find highest probability
+       let best = predictions.reduce((a, b) =>
+         a.probability > b.probability ? a : b
+       );
+       const output = {
+         class: best.className,
+         confidence: best.probability
+       };
+       document.getElementById("result").innerText =
+         best.className + " (" + (best.probability * 100).toFixed(2) + "%)";
+       // 🔥 SEND TO MIT APP INVENTOR
+       if (window.AppInventor) {
+         window.AppInventor.setWebViewString(JSON.stringify(output));
+       }
+     };
+   }
+</script>
+</body>
+</html>
