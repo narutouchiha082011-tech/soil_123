@@ -12,14 +12,28 @@
       margin: 0;
       background: black;
       color: white;
-      text-align: center;
       font-family: Arial;
+    }
+
+    /* FIXED BUTTON */
+    #flipBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 9999;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      background: #00ffcc;
+      border: none;
+      border-radius: 20px;
+      color: black;
     }
 
     #camera {
       display: flex;
       justify-content: center;
-      margin-top: 10px;
+      margin-top: 50px;
     }
 
     canvas {
@@ -30,29 +44,19 @@
     }
 
     #label {
+      text-align: center;
       margin-top: 10px;
       font-size: 20px;
       font-weight: bold;
       color: #00ffcc;
     }
-
-    button {
-      margin-top: 10px;
-      padding: 10px 18px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background: #00ffcc;
-      color: black;
-      font-weight: bold;
-    }
   </style>
 </head>
 
 <body>
-  <h2>Live Camera AI</h2>
 
-  <button onclick="flipCamera()">Flip Camera</button>
+  <!-- FLIP CAMERA BUTTON -->
+  <button id="flipBtn" onclick="flipCamera()">Flip</button>
 
   <div id="camera"></div>
   <div id="label">Loading...</div>
@@ -71,14 +75,13 @@
     }
 
     async function startCamera() {
-      // stop existing webcam if any
       if (webcam) {
         webcam.stop();
         document.getElementById("camera").innerHTML = "";
       }
 
       webcam = new tmImage.Webcam(400, 300, isFrontCamera);
-      await webcam.setup();   // permission happens here
+      await webcam.setup();
       await webcam.play();
 
       document.getElementById("camera").appendChild(webcam.canvas);
@@ -113,5 +116,6 @@
 
     init();
   </script>
+
 </body>
 </html>
